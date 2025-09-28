@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken'
+import { envs } from './envs';
 
+const JWT_SEED = envs.JWT_PRIVATE_SEED
 export class JwtAdapter {
 
     static async generateToken(
@@ -12,12 +14,30 @@ export class JwtAdapter {
             // Todo: Generacion del seed
             jwt.sign(
                 payload,
-                'SEED',
+                JWT_SEED,
                 { expiresIn: duration },
                 (err, token) => {
                     if (err) return resolve(null);
+
                     resolve(token!)
                 })
+        })
+    }
+
+
+    static async validateJtw<T>(token: string): Promise<T | null> {
+        return new Promise((resolve) => {
+            jwt.verify(
+                token,
+                JWT_SEED,
+                (error, decoded) => {
+                    if (error) {
+                        return resolve(null)
+                    }
+
+                    resolve(decoded as T)
+                }
+            )
         })
     }
 }

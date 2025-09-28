@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "./controller";
 import { AuthDatasourceImpl, AuthRepositoryImpl } from "../../infrastructure";
+import { AuthMiddleware } from "../middlewares/auth.middleare";
 
 export class AuthRoutes {
 
@@ -14,6 +15,8 @@ export class AuthRoutes {
         const controller = new AuthController(authRepository);
 
         // define  my principal rputes
+        router.get('/', AuthMiddleware.validateJwt, controller.getUsers)
+
         router.post('/register', controller.registerUser)
         router.post('/login', controller.loginUserUser)
 
