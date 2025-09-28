@@ -1,6 +1,5 @@
 import { Request, Response } from "express"
-import { AuthRepository, CustomError, RegisterUserDto } from "../../domain"
-import { JwtAdapter } from "../../config"
+import { AuthRepository, CustomError, RegisterUserUseCaseImp, RegisterUserDto, LoginUserDto, LoginUserUseCaseImp } from "../../domain"
 import { UserModel } from "../../data/mongodb"
 
 export class AuthController {
@@ -34,15 +33,9 @@ export class AuthController {
                 })
         }
 
-
-        this.authRepository.register(registerUserDto!)
-            .then(async (user) => {
-                const token = await JwtAdapter.generateToken({ id: user.id })
-                res.json({
-                    user,
-                    token
-                })
-            })
+        new RegisterUserUseCaseImp(this.authRepository)
+            .execute(registerUserDto!)
+            .then(data => res.json(data))
             .catch(error => this.handleError(error, res))
 
 
@@ -50,7 +43,18 @@ export class AuthController {
 
 
     loginUserUser = (req: Request, res: Response) => {
-        res.json('Login user controller')
+
+        const [error, loginuserDto] = LoginUserDto.create(req.body)
+        if (error) {
+            return res
+                .status(400)
+                .json({ error })
+        }
+
+        new LoginUserUseCaseImp(this.authRepository)
+            .execute(loginuserDto!)
+            .then(data => res.json(data))
+            .catch(error => this.handleError(error, res))
 
     }
 

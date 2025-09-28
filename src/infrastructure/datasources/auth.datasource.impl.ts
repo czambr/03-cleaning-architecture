@@ -1,6 +1,7 @@
 import { BcryptAdapter } from "../../config";
 import { UserModel } from "../../data/mongodb";
 import { AuthDatasource, CustomError, RegisterUserDto, UserEntity } from "../../domain";
+import { LoginUserDto } from "../../domain/dtos/auth/login-user.dto";
 import { UserMapper } from "../mappers/user.mapper";
 
 
@@ -32,7 +33,6 @@ export class AuthDatasourceImpl implements AuthDatasource {
 
 
             // 3. Map the answer to OWN entity
-            // Todo: falta un mapper
             return UserMapper.userEntityFromObject(user)
 
         } catch (error) {
@@ -43,6 +43,32 @@ export class AuthDatasourceImpl implements AuthDatasource {
             throw CustomError.internalServer();
         }
 
+    }
+
+    async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+        const { email, password } = loginUserDto
+
+        try {
+            const user = await UserModel.findOne({ email: email })
+            if (!user) {
+                throw CustomError.badRequest('User or password are invalid - email');
+            }
+
+            const matchingPassword = this.comparePassword(password, user.password)
+            if (!matchingPassword) {
+                throw CustomError.badRequest('User or password are invalid - password');
+            }
+
+            return UserMapper.userEntityFromObject(user)
+
+        } catch (error) {
+
+            if (error instanceof CustomError) {
+                throw error
+            }
+            console.log(error)
+            throw CustomError.internalServer();
+        }
     }
 
 }
